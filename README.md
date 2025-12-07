@@ -110,6 +110,91 @@ Key observations:
 
 ---
 
+## 💰 The Application: Privacy-First Finance Agent
+
+The real-world use case: **Automatically categorize credit card transactions without sending sensitive financial data to external APIs.**
+
+### How It Works
+
+The Finance Agent reads raw CSV credit card statements and uses the distributed LLM to intelligently classify each transaction into one of 13 spending categories:
+
+| Category | Example Merchants |
+|:--|:--|
+| 🏠 Housing & Home | Rent, Mortgage, Home Depot |
+| 💡 Utilities | Electric, Water, Internet |
+| 🍔 Food & Dining | Whole Foods, Starbucks, DoorDash |
+| 🚗 Transportation | Gas, Uber, Car Insurance |
+| ❤️ Health & Wellness | Pharmacy, Gym, Doctor |
+| 🛍️ Personal Spending | Amazon, Target, Clothing |
+| 🎬 Entertainment | Netflix, Spotify, Movies |
+| ✈️ Travel | Airlines, Hotels, Airbnb |
+| 👶 Children & Dependents | Daycare, School, Kids Activities |
+| 🐶 Pets | Vet, Pet Food, Grooming |
+| 🎁 Gifts & Donations | Charity, Gift Cards |
+| 💸 Financial & Debt | Loan Payments, Credit Card Fees |
+| 📦 Miscellaneous | Everything else |
+
+### Live Demo: Transaction Classification
+
+![Finance Agent Running](images/fa_local.png)
+*Left: Both GPUs processing in parallel (nvtop) | Right: Python script classifying transactions via the Parallax endpoint*
+
+**Sample Output:**
+```
+Starting processing of 2 transactions...
+
+[1/2] Processing: Whole Foods Market... ✅ Done
+   -> Category: 🍔 Food & Dining
+   -> Reasoning: The transaction took place at Whole Foods Market.
+--------------------------------------------------
+[2/2] Processing: Starbucks... ✅ Done
+   -> Category: 🍔 Food & Dining
+   -> Reasoning: None
+--------------------------------------------------
+```
+
+### The Code
+
+The agent sends each transaction to the local Parallax endpoint (`localhost:3000`) which routes it through the distributed cluster:
+
+```python
+# Configuration - pointing to local Parallax main server. This will route to run the jon in main and worker nodes.
+URL = "http://localhost:3001/v1/chat/completions"
+
+def classify_transaction(row_dict):
+    transaction_desc = (
+        f"Date: {row_dict['Date']}, "
+        f"Merchant: {row_dict['Merchant']}, "
+        f"Description: {row_dict['Description']}, "
+        f"Amount: ${row_dict['Amount']}"
+    )
+
+    payload = {
+        "model": MODEL_NAME,
+        "max_tokens": 512,
+        "temperature": 0.0,  # Deterministic results
+        "response_format": { "type": "json_object" },
+        "messages": [
+            {"role": "system", "content": CATEGORIES_PROMPT},
+            {"role": "user", "content": f"Classify this transaction:\n{transaction_desc}"}
+        ]
+    }
+
+    response = requests.post(URL, headers=HEADERS, json=payload)
+    return json.loads(response.json()['choices'][0]['message']['content'])
+```
+
+### Why Self-Hosted Matters for Finance
+
+| Approach | Privacy | Cost | Control |
+|:--|:--|:--|:--|
+| OpenAI/Claude API | ❌ Data sent to third party | 💸 Per-token pricing | ❌ Limited |
+| **Self-Hosted Parallax** | ✅ **Data never leaves your infra** | 💰 **Fixed GPU cost** | ✅ **Full control** |
+
+Your credit card statements contain sensitive PII (names, amounts, merchants, spending patterns). With Parallax, **all inference happens on your controlled infrastructure** — no data leaks, no third-party logging, no compliance nightmares.
+
+---
+
 ## 🔑 Key Takeaways
 
 | Challenge | Solution |
@@ -135,14 +220,14 @@ Key observations:
 ```
 gradient-pf/
 ├── README.md
-├── images/
-│   ├── architecture.png      # System architecture diagram
-│   ├── image.png             # Lambda instances dashboard
-│   ├── joinnode.png          # Parallax join setup
-│   ├── bothup.png            # Cluster topology view
-│   ├── running.png           # Model loading terminal
-│   └── ...                   # Performance screenshots
-└── finance_agent_local.ipynb          # Privacy-first finance agent(Local Test)
+├── finance_agent_local.ipynb    # Privacy-first finance agent notebook
+└── images/
+    ├── architecture.png         # System architecture diagram
+    ├── image.png                # Lambda instances dashboard
+    ├── joinnode.png             # Parallax join setup
+    ├── bothup.png               # Cluster topology view
+    ├── running.png              # Model loading terminal
+    └── fa_local.png             # Finance agent demo screenshot
 ```
 
 ---
