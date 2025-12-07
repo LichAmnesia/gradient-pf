@@ -53,7 +53,7 @@ The system serves a **Privacy-First Finance Agent**:
 
 ### 1. Provision GPU Instances
 
-Spin up two A10 instances in different regions. I used Lambda Labs:
+Spin up two A10 instances in different regions. I used Lambda:
 - **PARALLAX-CA**: `us-west-1` (California)
 - **PARALLAX-VA**: `us-east-1` (Virginia)
 
@@ -234,9 +234,9 @@ gradient-pf/
 
 ## 🔗 Links
 
-- **Parallax:** [Gradient HQ](https://gradient.ai)
+- **Parallax:** [Gradient_HQ](https://gradient.network/)
 - **Model:** [Qwen/Qwen2.5-14B-Instruct](https://huggingface.co/Qwen/Qwen2.5-14B-Instruct)
-- **Infrastructure:** [Lambda Labs](https://lambdalabs.com)
+- **Infrastructure:** [Lambda](https://lambda.ai/)
 
 ---
 
